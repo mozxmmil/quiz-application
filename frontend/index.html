@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quiz Application</title>
+    <style>
+      /* frontend/style.css */
+
+      body {
+        font-family: Arial, sans-serif;
+      }
+
+      h1 {
+        text-align: center;
+      }
+
+      #quiz {
+        margin-bottom: 20px;
+      }
+
+      button {
+        display: block;
+        margin: 0 auto;
+      }
+    </style>
+  </head>
+  <body>
+    <form id="quiz-form">
+      <h1>Quiz App</h1>
+      <div id="quiz"></div>
+      <button onclick="submitAnswers()">Submit Answers</button>
+    </form>
+
+    <script>
+      // Assume your HTML has a <div id="quiz"></div> to display questions
+
+      async function fetchQuestions() {
+        try {
+          const response = await fetch("http://localhost:3000/api/questions");
+          if (!response.ok) {
+            throw new Error("Failed to fetch questions");
+          }
+          const data = await response.json();
+          showQuestions(data);
+        } catch (error) {
+          console.error("Error fetching questions:", error);
+        }
+      }
+
+      function showQuestions(questions) {
+        const quizContainer = document.getElementById("quiz");
+        let quizHTML = "";
+        questions.forEach((question, index) => {
+          quizHTML += `
+            <div>
+                <p>${index + 1}. ${question.question}</p>
+                <ul>
+                    ${question.options
+                      .map(
+                        (option) =>
+                          `<li><input type="radio" name="question${index}" value="${option}">${option}</li>`
+                      )
+                      .join("")}
+                </ul>
+            </div>
+        `;
+        });
+        quizContainer.innerHTML = quizHTML;
+      }
+
+      // Assume you have a submit button that calls submitAnswers() on click
+      async function submitAnswers() {
+        try {
+          const form = document.querySelector("#quiz-form"); // Adjust selector based on your HTML
+          if (!form) {
+            throw new Error("Form not found");
+          }
+          const formData = new FormData(form);
+          const answers = Array.from(formData.values());
+
+          const response = await fetch("http://localhost:3000/api/submit", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(answers),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to submit answers");
+          }
+
+          const result = await response.json();
+          alert(`Your score is: ${result.score}`);
+        } catch (error) {
+          console.error("Error submitting answers:", error);
+        }
+      }
+
+      fetchQuestions();
+    </script>
+  </body>
+</html>
